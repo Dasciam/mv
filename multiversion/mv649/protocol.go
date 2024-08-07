@@ -14,6 +14,10 @@ import (
 
 type Protocol struct{}
 
+func (Protocol) Encryption(key [32]byte) gtpacket.Encryption {
+	return gtpacket.NewCTREncryption(key[:])
+}
+
 func (Protocol) ID() int32 {
 	return 649
 }
@@ -35,10 +39,6 @@ func (Protocol) Packets(listener bool) gtpacket.Pool {
 		return packet.NewClientPool()
 	}
 	return packet.NewServerPool()
-}
-
-func (Protocol) Encryption(key [32]byte) gtpacket.Encryption {
-	return gtpacket.NewCTREncryption(key[:])
 }
 
 func (Protocol) ConvertToLatest(pk gtpacket.Packet, conn *minecraft.Conn) []gtpacket.Packet {
@@ -107,63 +107,36 @@ func Downgrade(pks []gtpacket.Packet, conn *minecraft.Conn) []gtpacket.Packet {
 	for _, pk := range downgraded {
 		switch pk := pk.(type) {
 		case *gtpacket.AvailableCommands:
-			// HACK!!! Why??!?!?! because GOLANG doesn't like it when i just replace p.Type :////
-			cmds := make([]protocol.Command, 0, len(pk.Commands))
-			for _, c := range pk.Commands {
-				cmd := protocol.Command{}
-				cmd.Name = c.Name
-				cmd.Description = c.Description
-				cmd.Flags = c.Flags
-				cmd.PermissionLevel = c.PermissionLevel
-				cmd.AliasesOffset = c.AliasesOffset
-				cmd.ChainedSubcommandOffsets = c.ChainedSubcommandOffsets
-				cmd.Overloads = make([]protocol.CommandOverload, 0, len(c.Overloads))
-
-				for _, o := range c.Overloads {
-					overload := protocol.CommandOverload{}
-					overload.Chaining = o.Chaining
-					overload.Parameters = make([]protocol.CommandParameter, 0, len(o.Parameters))
-
-					for _, p := range o.Parameters {
-						param := protocol.CommandParameter{}
-						param.Name = p.Name
-						param.Optional = p.Optional
-						param.Options = p.Options
-
+			for _, cmd := range pk.Commands {
+				for _, overload := range cmd.Overloads {
+					for _, param := range overload.Parameters {
 						var newT uint32 = protocol.CommandArgValid
-						if p.Type == (protocol.CommandArgTypeEquipmentSlots | protocol.CommandArgValid) {
+
+						switch param.Type | protocol.CommandArgValid {
+						case protocol.CommandArgTypeEquipmentSlots:
 							newT |= packet.CommandArgTypeEquipmentSlots
-						} else if p.Type == (protocol.CommandArgTypeString | protocol.CommandArgValid) {
+						case protocol.CommandArgTypeString:
 							newT |= packet.CommandArgTypeString
-						} else if p.Type == (protocol.CommandArgTypeBlockPosition | protocol.CommandArgValid) {
+						case protocol.CommandArgTypeBlockPosition:
 							newT |= packet.CommandArgTypeBlockPosition
-						} else if p.Type == (protocol.CommandArgTypePosition | protocol.CommandArgValid) {
+						case protocol.CommandArgTypePosition:
 							newT |= packet.CommandArgTypePosition
-						} else if p.Type == (protocol.CommandArgTypeMessage | protocol.CommandArgValid) {
+						case protocol.CommandArgTypeMessage:
 							newT |= packet.CommandArgTypeMessage
-						} else if p.Type == (protocol.CommandArgTypeRawText | protocol.CommandArgValid) {
+						case protocol.CommandArgTypeRawText:
 							newT |= packet.CommandArgTypeRawText
-						} else if p.Type == (protocol.CommandArgTypeJSON | protocol.CommandArgValid) {
+						case protocol.CommandArgTypeJSON:
 							newT |= packet.CommandArgTypeJSON
-						} else if p.Type == (protocol.CommandArgTypeBlockStates | protocol.CommandArgValid) {
+						case protocol.CommandArgTypeBlockStates:
 							newT |= packet.CommandArgTypeBlockStates
-						} else if p.Type == (protocol.CommandArgTypeCommand | protocol.CommandArgValid) {
+						case protocol.CommandArgTypeCommand:
 							newT |= packet.CommandArgTypeCommand
-						} else {
-							// We don't need to downgrade these.
-							continue
 						}
 
 						param.Type = newT
-						overload.Parameters = append(overload.Parameters, param)
 					}
-
-					cmd.Overloads = append(cmd.Overloads, overload)
 				}
-
-				cmds = append(cmds, cmd)
 			}
-			pk.Commands = cmds
 			packets = append(packets, pk)
 		case *gtpacket.SetActorMotion:
 			packets = append(packets, &packet.SetActorMotion{

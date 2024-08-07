@@ -3,6 +3,7 @@ package packet
 import (
 	"github.com/go-gl/mathgl/mgl32"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
+	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 )
 
 const (
@@ -134,7 +135,7 @@ type PlayerAuthInput struct {
 
 // ID ...
 func (pk *PlayerAuthInput) ID() uint32 {
-	return IDPlayerAuthInput
+	return packet.IDPlayerAuthInput
 }
 
 func (pk *PlayerAuthInput) Marshal(io protocol.IO) {

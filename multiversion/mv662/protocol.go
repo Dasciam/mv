@@ -2,6 +2,7 @@ package mv662
 
 import (
 	"github.com/oomph-ac/mv/multiversion/mv662/packet"
+	"github.com/oomph-ac/mv/multiversion/mv671"
 	"github.com/oomph-ac/mv/multiversion/util"
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
@@ -9,6 +10,10 @@ import (
 )
 
 type Protocol struct{}
+
+func (Protocol) Encryption(key [32]byte) gtpacket.Encryption {
+	return gtpacket.NewCTREncryption(key[:])
+}
 
 func (Protocol) ID() int32 {
 	return 662
@@ -33,10 +38,6 @@ func (Protocol) Packets(listener bool) gtpacket.Pool {
 	return packet.NewServerPool()
 }
 
-func (Protocol) Encryption(key [32]byte) gtpacket.Encryption {
-	return gtpacket.NewCTREncryption(key[:])
-}
-
 func (Protocol) ConvertToLatest(pk gtpacket.Packet, conn *minecraft.Conn) []gtpacket.Packet {
 	if upgraded, ok := util.DefaultUpgrade(conn, pk, Mapping); ok {
 		if upgraded == nil {
@@ -58,7 +59,7 @@ func (Protocol) ConvertFromLatest(pk gtpacket.Packet, conn *minecraft.Conn) []gt
 }
 
 func Upgrade(pks []gtpacket.Packet, conn *minecraft.Conn) []gtpacket.Packet {
-	packets := []gtpacket.Packet{}
+	var packets []gtpacket.Packet
 	for _, pk := range pks {
 		switch pk := pk.(type) {
 		case *packet.PlayerAuthInput:
@@ -87,13 +88,14 @@ func Upgrade(pks []gtpacket.Packet, conn *minecraft.Conn) []gtpacket.Packet {
 		}
 	}
 
-	return packets
+	return mv671.Upgrade(packets, conn)
 }
 
 func Downgrade(pks []gtpacket.Packet, conn *minecraft.Conn) []gtpacket.Packet {
-	packets := make([]gtpacket.Packet, 0, len(pks))
+	downgraded := mv671.Downgrade(pks, conn)
+	packets := make([]gtpacket.Packet, 0, len(downgraded))
 
-	for _, pk := range pks {
+	for _, pk := range downgraded {
 		switch pk := pk.(type) {
 		case *gtpacket.ResourcePackStack:
 			packets = append(packets, &packet.ResourcePackStack{

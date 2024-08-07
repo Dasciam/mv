@@ -98,9 +98,9 @@ func (x *PlayerListEntry) Marshal(r protocol.IO) {
 }
 
 func DowngradePlayerEntries(entries []protocol.PlayerListEntry) []PlayerListEntry {
-	new := make([]PlayerListEntry, 0, len(entries))
+	newEntries := make([]PlayerListEntry, 0, len(entries))
 	for _, e := range entries {
-		new = append(new, PlayerListEntry{
+		newEntries = append(newEntries, PlayerListEntry{
 			UUID:           e.UUID,
 			EntityUniqueID: e.EntityUniqueID,
 			Username:       e.Username,
@@ -113,5 +113,5 @@ func DowngradePlayerEntries(entries []protocol.PlayerListEntry) []PlayerListEntr
 		})
 	}
 
-	return new
+	return newEntries
 }

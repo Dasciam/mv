@@ -1,8 +1,7 @@
-package mv594
+package mv671
 
 import (
 	_ "embed"
-
 	"github.com/oomph-ac/mv/multiversion/mappings"
 )
 
@@ -16,5 +15,5 @@ var (
 )
 
 func init() {
-	Mapping = mappings.Mapping(blockStates, itemRuntimeIDs, false)
+	Mapping = mappings.Mapping(blockStates, itemRuntimeIDs)
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sandertv/gophertunnel/minecraft/nbt"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
+	gtpacket "github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 )
 
 const (
@@ -249,7 +250,7 @@ type StartGame struct {
 
 // ID ...
 func (*StartGame) ID() uint32 {
-	return IDStartGame
+	return gtpacket.IDStartGame
 }
 
 func (pk *StartGame) Marshal(io protocol.IO) {

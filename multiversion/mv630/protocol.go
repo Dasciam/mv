@@ -13,6 +13,10 @@ import (
 
 type Protocol struct{}
 
+func (Protocol) Encryption(key [32]byte) gtpacket.Encryption {
+	return gtpacket.NewCTREncryption(key[:])
+}
+
 func (Protocol) ID() int32 {
 	return 630
 }
@@ -34,10 +38,6 @@ func (Protocol) Packets(listener bool) gtpacket.Pool {
 		return packet.NewClientPool()
 	}
 	return packet.NewServerPool()
-}
-
-func (Protocol) Encryption(key [32]byte) gtpacket.Encryption {
-	return gtpacket.NewCTREncryption(key[:])
 }
 
 func (Protocol) ConvertToLatest(pk gtpacket.Packet, conn *minecraft.Conn) []gtpacket.Packet {
