@@ -126,6 +126,8 @@ func DefaultUpgrade(_ *minecraft.Conn, pk packet.Packet, mapping mappings.MVMapp
 						}
 					}
 				}
+				newSub.Compact()
+
 				pk.SubChunkEntries[i].RawPayload = append(chunk.EncodeSubChunk(newSub, chunk.NetworkEncoding, overWorldRange, int(index)), buff.Bytes()...)
 			}
 		}
@@ -147,24 +149,26 @@ func DefaultUpgrade(_ *minecraft.Conn, pk packet.Packet, mapping mappings.MVMapp
 			}
 
 			var index byte = 0
-			sub, err := chunk.DecodeSubChunk(LatestAirRID, overWorldRange, bytes.NewBuffer(blob.Payload), &index, chunk.NetworkEncoding)
+			sub, err := chunk.DecodeSubChunk(mapping.LegacyAirRID, overWorldRange, bytes.NewBuffer(blob.Payload), &index, chunk.NetworkEncoding)
 			if err != nil {
 				logrus.Error(err)
 				return pk, true
 			}
 
-			for _, layer := range sub.Layers() {
+			newSub := chunk.NewSubChunk(LatestAirRID)
+			for li, layer := range sub.Layers() {
+				newLayer := newSub.Layer(uint8(li))
 				for x := uint8(0); x < 16; x++ {
 					for z := uint8(0); z < 16; z++ {
 						for y := uint8(0); y < 16; y++ {
-							layer.Set(x, y, z, UpgradeBlockRuntimeID(layer.At(x, y, z), mapping))
+							newLayer.Set(x, y, z, UpgradeBlockRuntimeID(layer.At(x, y, z), mapping))
 						}
 					}
 				}
 			}
-			sub.Compact()
+			newSub.Compact()
 
-			pk.Blobs[i].Payload = chunk.EncodeSubChunk(sub, chunk.NetworkEncoding, overWorldRange, int(index))
+			pk.Blobs[i].Payload = chunk.EncodeSubChunk(newSub, chunk.NetworkEncoding, overWorldRange, int(index))
 		}
 	case *packet.SetHud:
 		break
@@ -312,16 +316,20 @@ func DefaultDowngrade(_ *minecraft.Conn, pk packet.Packet, mapping mappings.MVMa
 					return pk, true
 				}
 
-				for _, layer := range sub.Layers() {
+				newSub := chunk.NewSubChunk(mapping.LegacyAirRID)
+				for li, layer := range sub.Layers() {
+					newLayer := newSub.Layer(uint8(li))
 					for x := uint8(0); x < 16; x++ {
 						for z := uint8(0); z < 16; z++ {
 							for y := uint8(0); y < 16; y++ {
-								layer.Set(x, y, z, DowngradeBlockRuntimeID(layer.At(x, y, z), mapping))
+								newLayer.Set(x, y, z, DowngradeBlockRuntimeID(layer.At(x, y, z), mapping))
 							}
 						}
 					}
 				}
-				pk.SubChunkEntries[i].RawPayload = append(chunk.EncodeSubChunk(sub, chunk.NetworkEncoding, overWorldRange, int(index)), buff.Bytes()...)
+				newSub.Compact()
+
+				pk.SubChunkEntries[i].RawPayload = append(chunk.EncodeSubChunk(newSub, chunk.NetworkEncoding, overWorldRange, int(index)), buff.Bytes()...)
 			}
 		}
 	case *packet.ClientCacheMissResponse:
@@ -337,18 +345,20 @@ func DefaultDowngrade(_ *minecraft.Conn, pk packet.Packet, mapping mappings.MVMa
 				return pk, true
 			}
 
-			for _, layer := range sub.Layers() {
+			newSub := chunk.NewSubChunk(mapping.LegacyAirRID)
+			for li, layer := range sub.Layers() {
+				newLayer := newSub.Layer(uint8(li))
 				for x := uint8(0); x < 16; x++ {
 					for z := uint8(0); z < 16; z++ {
 						for y := uint8(0); y < 16; y++ {
-							layer.Set(x, y, z, DowngradeBlockRuntimeID(layer.At(x, y, z), mapping))
+							newLayer.Set(x, y, z, DowngradeBlockRuntimeID(layer.At(x, y, z), mapping))
 						}
 					}
 				}
 			}
-			sub.Compact()
+			newSub.Compact()
 
-			pk.Blobs[i].Payload = chunk.EncodeSubChunk(sub, chunk.NetworkEncoding, overWorldRange, int(index))
+			pk.Blobs[i].Payload = chunk.EncodeSubChunk(newSub, chunk.NetworkEncoding, overWorldRange, int(index))
 		}
 	default:
 		handled = false
