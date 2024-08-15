@@ -5,24 +5,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/sandertv/gophertunnel/minecraft/nbt"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
-	gtpacket "github.com/sandertv/gophertunnel/minecraft/protocol/packet"
-)
-
-const (
-	SpawnBiomeTypeDefault = iota
-	SpawnBiomeTypeUserDefined
-)
-
-const (
-	ChatRestrictionLevelNone     = 0
-	ChatRestrictionLevelDropped  = 1
-	ChatRestrictionLevelDisabled = 2
-)
-
-const (
-	EditorWorldTypeNotEditor = iota
-	EditorWorldTypeProject
-	EditorWorldTypeTestLevel
+	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 )
 
 // StartGame is sent by the server to send information about the world the player will be spawned in. It
@@ -250,7 +233,7 @@ type StartGame struct {
 
 // ID ...
 func (*StartGame) ID() uint32 {
-	return gtpacket.IDStartGame
+	return packet.IDStartGame
 }
 
 func (pk *StartGame) Marshal(io protocol.IO) {

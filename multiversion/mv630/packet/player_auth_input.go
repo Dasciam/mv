@@ -6,6 +6,7 @@ import (
 	"github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 )
 
+//goland:noinspection GoUnusedConst
 const (
 	InputFlagAscend = 1 << iota
 	InputFlagDescend

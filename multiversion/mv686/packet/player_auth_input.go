@@ -2,12 +2,12 @@ package packet
 
 import (
 	"github.com/go-gl/mathgl/mgl32"
+	v686protocol "github.com/oomph-ac/mv/multiversion/mv686/protocol"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
-
 	gtpacket "github.com/sandertv/gophertunnel/minecraft/protocol/packet"
 )
 
-//goland:noinspection GoUnusedConst
+//goland:noinspection ALL
 const (
 	InputFlagAscend = 1 << iota
 	InputFlagDescend
@@ -57,8 +57,10 @@ const (
 	InputFlagClientPredictedVehicle
 	InputFlagPaddlingLeft
 	InputFlagPaddlingRight
+	InputFlagBlockBreakingDelayEnabled
 )
 
+//goland:noinspection ALL
 const (
 	InputModeMouse = iota + 1
 	InputModeTouch
@@ -66,6 +68,7 @@ const (
 	InputModeMotionController
 )
 
+//goland:noinspection ALL
 const (
 	PlayModeNormal = iota
 	PlayModeTeaser
@@ -79,6 +82,7 @@ const (
 	PlayModeNumModes
 )
 
+//goland:noinspection ALL
 const (
 	InteractionModelTouch = iota
 	InteractionModelCrosshair
@@ -110,7 +114,7 @@ type PlayerAuthInput struct {
 	PlayMode uint32
 	// InteractionModel is a constant representing the interaction model the player is using. It is one of the
 	// constants that may be found above.
-	InteractionModel int32
+	InteractionModel uint32
 	// GazeDirection is the direction in which the player is gazing, when the PlayMode is PlayModeReality: In
 	// other words, when the player is playing in virtual reality.
 	GazeDirection mgl32.Vec3
@@ -121,11 +125,14 @@ type PlayerAuthInput struct {
 	// as it can be calculated by the server itself.
 	Delta mgl32.Vec3
 	// ItemInteractionData is the transaction data if the InputData includes an item interaction.
-	ItemInteractionData protocol.UseItemTransactionData
+	// Not using v686protocol.UseItemTransactionData. See protocol.IO.PlayerInventoryAction()
+	ItemInteractionData v686protocol.UseItemTransactionData
 	// ItemStackRequest is sent by the client to change an item in their inventory.
-	ItemStackRequest protocol.ItemStackRequest
+	ItemStackRequest v686protocol.ItemStackRequest
 	// BlockActions is a slice of block actions that the client has interacted with.
 	BlockActions []protocol.PlayerBlockAction
+	// VehicleRotation is the rotation of the vehicle that the player is in, if any.
+	VehicleRotation mgl32.Vec2
 	// ClientPredictedVehicle is the unique ID of the vehicle that the client predicts the player to be in.
 	ClientPredictedVehicle int64
 	// AnalogueMoveVector is a Vec2 that specifies the direction in which the player moved, as a combination
@@ -147,7 +154,7 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	io.Varuint64(&pk.InputData)
 	io.Varuint32(&pk.InputMode)
 	io.Varuint32(&pk.PlayMode)
-	io.Varint32(&pk.InteractionModel)
+	io.Varuint32(&pk.InteractionModel)
 	if pk.PlayMode == PlayModeReality {
 		io.Vec3(&pk.GazeDirection)
 	}
@@ -155,19 +162,21 @@ func (pk *PlayerAuthInput) Marshal(io protocol.IO) {
 	io.Vec3(&pk.Delta)
 
 	if pk.InputData&InputFlagPerformItemInteraction != 0 {
-		io.PlayerInventoryAction(&pk.ItemInteractionData)
+		protocol.Single(io, &pk.ItemInteractionData)
+		//io.PlayerInventoryAction(&pk.ItemInteractionData)
 	}
 
 	if pk.InputData&InputFlagPerformItemStackRequest != 0 {
 		protocol.Single(io, &pk.ItemStackRequest)
 	}
 
-	if pk.InputData&InputFlagClientPredictedVehicle != 0 {
-		io.Varint64(&pk.ClientPredictedVehicle)
-	}
-
 	if pk.InputData&InputFlagPerformBlockActions != 0 {
 		protocol.SliceVarint32Length(io, &pk.BlockActions)
+	}
+
+	if pk.InputData&InputFlagClientPredictedVehicle != 0 {
+		io.Vec2(&pk.VehicleRotation)
+		io.Varint64(&pk.ClientPredictedVehicle)
 	}
 
 	io.Vec2(&pk.AnalogueMoveVector)

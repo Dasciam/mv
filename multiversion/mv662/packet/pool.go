@@ -8,6 +8,8 @@ import (
 // NOTE: CorrectPlayerMovementPrediction is not included in here, since changes
 // to the packet were made late, and it was updated around 1.20.50 (630).
 
+// NewClientPool returns a new pool containing packets sent by a client.
+// Packets may be retrieved from it simply by indexing it with the packet ID.
 func NewClientPool() packet.Pool {
 	pool := v671packet.NewClientPool()
 
@@ -16,6 +18,8 @@ func NewClientPool() packet.Pool {
 	return pool
 }
 
+// NewServerPool returns a new pool containing packets sent by a server.
+// Packets may be retrieved from it simply by indexing it with the packet ID.
 func NewServerPool() packet.Pool {
 	pool := v671packet.NewServerPool()
 
