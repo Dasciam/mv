@@ -99,7 +99,7 @@ func Downgrade(pks []gtpacket.Packet, conn *minecraft.Conn) []gtpacket.Packet {
 	downgraded := mv685.Downgrade(pks, conn)
 	packets := make([]gtpacket.Packet, 0, len(downgraded))
 
-	for _, pk := range pks {
+	for _, pk := range downgraded {
 		switch pk := pk.(type) {
 		case *gtpacket.CraftingData:
 			packets = append(packets, &packet.CraftingData{
