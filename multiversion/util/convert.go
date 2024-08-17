@@ -332,34 +332,6 @@ func DefaultDowngrade(_ *minecraft.Conn, pk packet.Packet, mapping mappings.MVMa
 				pk.SubChunkEntries[i].RawPayload = append(chunk.EncodeSubChunk(newSub, chunk.NetworkEncoding, overWorldRange, int(index)), buff.Bytes()...)
 			}
 		}
-	case *packet.ClientCacheMissResponse:
-		for i, blob := range pk.Blobs {
-			if blob.Payload[0] != chunk.SubChunkVersion {
-				continue
-			}
-
-			var index byte = 0
-			sub, err := chunk.DecodeSubChunk(LatestAirRID, overWorldRange, bytes.NewBuffer(blob.Payload), &index, chunk.NetworkEncoding)
-			if err != nil {
-				logrus.Error(err)
-				return pk, true
-			}
-
-			newSub := chunk.NewSubChunk(mapping.LegacyAirRID)
-			for li, layer := range sub.Layers() {
-				newLayer := newSub.Layer(uint8(li))
-				for x := uint8(0); x < 16; x++ {
-					for z := uint8(0); z < 16; z++ {
-						for y := uint8(0); y < 16; y++ {
-							newLayer.Set(x, y, z, DowngradeBlockRuntimeID(layer.At(x, y, z), mapping))
-						}
-					}
-				}
-			}
-			newSub.Compact()
-
-			pk.Blobs[i].Payload = chunk.EncodeSubChunk(newSub, chunk.NetworkEncoding, overWorldRange, int(index))
-		}
 	default:
 		handled = false
 	}
