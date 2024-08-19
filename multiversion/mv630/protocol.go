@@ -1,7 +1,6 @@
 package mv630
 
 import (
-	"fmt"
 	"github.com/oomph-ac/mv/multiversion/mv630/packet"
 	v630protocol "github.com/oomph-ac/mv/multiversion/mv630/protocol"
 	"github.com/oomph-ac/mv/multiversion/mv649"
@@ -122,10 +121,6 @@ func Downgrade(pks []gtpacket.Packet, conn *minecraft.Conn) []gtpacket.Packet {
 		default:
 			packets = append(packets, pk)
 		}
-	}
-	fmt.Printf("Packet: %T\n", packets[0])
-	if packets[0].ID() == gtpacket.IDResourcePacksInfo {
-		fmt.Printf("%+v\n", packets[0])
 	}
 	return packets
 }
