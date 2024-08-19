@@ -1,6 +1,7 @@
 package mv630
 
 import (
+	"fmt"
 	"github.com/oomph-ac/mv/multiversion/mv630/packet"
 	v630protocol "github.com/oomph-ac/mv/multiversion/mv630/protocol"
 	"github.com/oomph-ac/mv/multiversion/mv649"
@@ -100,8 +101,10 @@ func Upgrade(pks []gtpacket.Packet, conn *minecraft.Conn) []gtpacket.Packet {
 
 // Downgrade ...
 func Downgrade(pks []gtpacket.Packet, conn *minecraft.Conn) []gtpacket.Packet {
-	packets := make([]gtpacket.Packet, 0, len(pks))
-	for _, pk := range mv649.Downgrade(pks, conn) {
+	downgraded := mv649.Downgrade(pks, conn)
+	packets := make([]gtpacket.Packet, 0, len(downgraded))
+
+	for _, pk := range downgraded {
 		switch pk := pk.(type) {
 		case *gtpacket.LevelChunk:
 			packets = append(packets, &packet.LevelChunk{
@@ -119,6 +122,10 @@ func Downgrade(pks []gtpacket.Packet, conn *minecraft.Conn) []gtpacket.Packet {
 		default:
 			packets = append(packets, pk)
 		}
+	}
+	fmt.Printf("Packet: %T\n", packets[0])
+	if packets[0].ID() == gtpacket.IDResourcePacksInfo {
+		fmt.Printf("%+v\n", packets[0])
 	}
 	return packets
 }

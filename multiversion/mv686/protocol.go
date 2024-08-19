@@ -273,38 +273,12 @@ func Downgrade(pks []gtpacket.Packet, _ *minecraft.Conn) []gtpacket.Packet {
 				Tick:           pk.Tick,
 			})
 		case *gtpacket.ResourcePacksInfo:
-			behaviourPacks := make([]v686protocol.BehaviourPackInfo, len(pk.BehaviourPacks))
-			for i, pack := range pk.BehaviourPacks {
-				behaviourPacks[i] = v686protocol.BehaviourPackInfo{
-					UUID:            pack.UUID,
-					Version:         pack.Version,
-					Size:            pack.Size,
-					ContentKey:      pack.ContentKey,
-					SubPackName:     pack.SubPackName,
-					ContentIdentity: pack.ContentIdentity,
-					HasScripts:      pack.HasScripts,
-				}
-			}
-			texturePacks := make([]v686protocol.TexturePackInfo, len(pk.TexturePacks))
-			for i, pack := range pk.TexturePacks {
-				texturePacks[i] = v686protocol.TexturePackInfo{
-					UUID:            pack.UUID,
-					Version:         pack.Version,
-					Size:            pack.Size,
-					ContentKey:      pack.ContentKey,
-					SubPackName:     pack.SubPackName,
-					ContentIdentity: pack.ContentIdentity,
-					HasScripts:      pack.HasScripts,
-					RTXEnabled:      pack.RTXEnabled,
-				}
-			}
-
 			packets = append(packets, &packet.ResourcePacksInfo{
 				TexturePackRequired: pk.TexturePackRequired,
 				HasAddons:           pk.HasAddons,
 				HasScripts:          pk.HasScripts,
-				BehaviourPacks:      behaviourPacks,
-				TexturePacks:        texturePacks,
+				BehaviourPacks:      downgradeBehaviourPacks(pk.BehaviourPacks),
+				TexturePacks:        downgradeTexturePacks(pk.TexturePacks),
 				ForcingServerPacks:  pk.ForcingServerPacks,
 				PackURLs:            pk.PackURLs,
 			})
@@ -407,6 +381,40 @@ func Downgrade(pks []gtpacket.Packet, _ *minecraft.Conn) []gtpacket.Packet {
 	return packets
 }
 
+// downgradeBehaviourPacks transforms latest []protocol.TexturePackInfo to []v686protocol.TexturePackInfo.
+func downgradeTexturePacks(infos []protocol.TexturePackInfo) []v686protocol.TexturePackInfo {
+	newTexturePacks := make([]v686protocol.TexturePackInfo, len(infos))
+	for i, info := range infos {
+		newTexturePacks[i] = v686protocol.TexturePackInfo{
+			UUID:            info.UUID,
+			Version:         info.Version,
+			Size:            info.Size,
+			ContentKey:      info.ContentKey,
+			SubPackName:     info.SubPackName,
+			ContentIdentity: info.ContentIdentity,
+			HasScripts:      info.HasScripts,
+		}
+	}
+	return newTexturePacks
+}
+
+// downgradeBehaviourPacks transforms latest []protocol.BehaviourPackInfo to []v686protocol.BehaviourPackInfo.
+func downgradeBehaviourPacks(infos []protocol.BehaviourPackInfo) []v686protocol.BehaviourPackInfo {
+	newTexturePacks := make([]v686protocol.BehaviourPackInfo, len(infos))
+	for i, info := range infos {
+		newTexturePacks[i] = v686protocol.BehaviourPackInfo{
+			UUID:            info.UUID,
+			Version:         info.Version,
+			Size:            info.Size,
+			ContentKey:      info.ContentKey,
+			SubPackName:     info.SubPackName,
+			ContentIdentity: info.ContentIdentity,
+			HasScripts:      info.HasScripts,
+		}
+	}
+	return newTexturePacks
+}
+
 // upgradeStackRequestSlotInfo transforms v686protocol.StackRequestSlotInfo to the latest version.
 func upgradeStackRequestSlotInfo(info v686protocol.StackRequestSlotInfo) protocol.StackRequestSlotInfo {
 	return protocol.StackRequestSlotInfo{
@@ -418,7 +426,7 @@ func upgradeStackRequestSlotInfo(info v686protocol.StackRequestSlotInfo) protoco
 	}
 }
 
-// downgradeEntityLinks transforms array of latest protocol.EntityLink to v686protocol.EntityLink.
+// downgradeEntityLinks transforms array of latest []protocol.EntityLink to []v686protocol.EntityLink.
 func downgradeEntityLinks(links []protocol.EntityLink) []v686protocol.EntityLink {
 	newLinks := make([]v686protocol.EntityLink, 0, len(links))
 	for _, link := range links {

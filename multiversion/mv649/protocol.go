@@ -2,6 +2,7 @@ package mv649
 
 import (
 	"github.com/go-gl/mathgl/mgl32"
+	v686packet "github.com/oomph-ac/mv/multiversion/mv686/packet"
 	"github.com/sandertv/gophertunnel/minecraft"
 	"github.com/sandertv/gophertunnel/minecraft/protocol"
 
@@ -150,7 +151,7 @@ func Downgrade(pks []gtpacket.Packet, conn *minecraft.Conn) []gtpacket.Packet {
 				Velocity:        pk.Velocity,
 				EntityRuntimeID: pk.EntityRuntimeID,
 			})
-		case *gtpacket.ResourcePacksInfo:
+		case *v686packet.ResourcePacksInfo:
 			packets = append(packets, &packet.ResourcePacksInfo{
 				TexturePackRequired: pk.TexturePackRequired,
 				HasScripts:          pk.HasScripts,
